@@ -1,0 +1,24 @@
+#!/bin/zsh
+
+dirs=(
+  "xresources/.Xresources"
+  "alacritty/alacritty.yml"
+  "polybar/config" 
+  "rofi/rofi.rasi" 
+  "nvim/colors/base16.vim"
+  "nvim/plugged/lightline.vim/autoload/lightline/colorscheme/base16.vim"
+)
+
+for i in ${dirs[*]}; do
+  pybase16 inject -s $1 -f "../config/"$i
+done
+
+state=$(autorandr --current)
+
+if [ "$state" = "docked" ]; then
+  zsh ~/.config/polybar/polydocked.sh
+else 
+  zsh ~/.config/polybar/polymobile.sh
+fi
+
+notify-send "Colorscheme: $1"
