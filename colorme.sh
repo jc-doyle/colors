@@ -5,8 +5,9 @@ dirs=(
   "alacritty/alacritty.yml"
   "polybar/config" 
   "rofi/rofi.rasi" 
-  "nvim/colors/base16.vim"
-  "nvim/plugged/lightline.vim/autoload/lightline/colorscheme/base16.vim"
+  "nvim/lua/colors/colors.lua"
+  "zsh/fzfcolors.zsh"
+  "zathura/zathurarc"
 )
 
 for i in ${dirs[*]}; do
