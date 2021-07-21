@@ -8,6 +8,7 @@ dirs=(
   "nvim/lua/colors/colors.lua"
   "zsh/fzfcolors.zsh"
   "zathura/zathurarc"
+  "kitty/kitty.conf"
 )
 
 for i in ${dirs[*]}; do
