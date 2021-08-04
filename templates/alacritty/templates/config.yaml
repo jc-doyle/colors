@@ -1,3 +1,2 @@
 default:
-  extension: .yml
-  output: colors
+    extension: .yaml
