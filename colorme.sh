@@ -9,6 +9,7 @@ dirs=(
   "zsh/fzfcolors.zsh"
   "zathura/zathurarc"
   "dunst/dunstrc"
+  "sc-im/theme"
 )
 
 for i in ${dirs[*]}; do
