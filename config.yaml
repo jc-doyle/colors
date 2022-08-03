@@ -1,0 +1,5 @@
+alacritty: "/home/jonty/other/dotfiles/config/alacritty/alacritty.yml"
+neovim: "/home/jonty/other/dotfiles/config/nvim/lua/colors/colors.lua"
+dunst: "/home/jonty/other/dotfiles/config/dunst/dunstrc"
+polybar: "/home/jonty/other/dotfiles/config/polybar/config"
+rofi: "/home/jonty/other/dotfiles/config/rofi/themes/rofi.rasi"
