@@ -1,85 +1,113 @@
-import yaml
 import chevron
-import os
-import sys
 import pickle
+import os
+from pathlib import Path
 from .recipient import Recipient
-from .common import print_err
 
-try:
-    BASE_DIR = os.environ['COLOR_DIR']
-except KeyError:
-    print_err('Environment variable "COLOR_DIR" not found. Aborted.')
+from .common import print_err, parse_yaml, Config
 
-CONFIG_PATH = f'{BASE_DIR}config.yaml'
-SCHEME_DIR = f'{BASE_DIR}schemes/'
-TEMPLATE_DIR = f'{BASE_DIR}templates/'
-PICKLE_FILE = f'{BASE_DIR}current.pkl'
-
+SCHEME_ENV = 'COLORSCHEME'
 
 class Colors:
 
-    def __init__(self):
-        self.schemes = self._fetch_schemes(SCHEME_DIR)
-        self.templates = self._fetch_templates(TEMPLATE_DIR)
-        self.current = self._get_current()
+    def __init__(self, dir):
+        self.pickle_file = dir / '.current'
+        self.config = self.__get_config(dir)
+        self.schemes = self.__fetch_schemes(dir)
+        self.templates = self.__fetch_templates(dir)
+        self.current = self.__get_current()
 
-    def _get_current(self):
-        try:
-            with open(PICKLE_FILE, "rb") as f:
+    def __get_config(self, dir: Path):
+        config_path = dir / 'config.yaml'
+        # Config(config_path)
+        if config_path.is_file():
+            return parse_yaml(config_path)
+        else:
+            print_err(f'"config.yaml" not found in "{dir}"\nAborted')
+
+    def __get_current(self):
+        if self.pickle_file.is_file():
+            with self.pickle_file.open("rb") as f:
                 current = pickle.load(f)
-        except (FileNotFoundError, TypeError):
+        else:
             current = None
 
         return current
 
-    def _fetch_schemes(self, dir):
-        with os.scandir(dir) as iterator:
+    def __fetch_schemes(self, dir: Path):
+        scheme_dir = dir / 'schemes'
+        if scheme_dir.is_dir():
             schemes = {}
-            for item in iterator:
-                if item.name.endswith(".yaml") and item.is_file():
-                    name = item.name.split('.')[0]
-                    schemes[name] = self.__fetch_scheme(item.path)
+            for child in scheme_dir.iterdir():
+                items = parse_yaml(child)
+                schemes[child.stem] = items
+
             return schemes
+        else:
+            print_err(f'No scheme directory found in "{dir}"')
 
-    def _fetch_templates(self, dir):
-        with os.scandir(dir) as iterator:
+    def __fetch_templates(self, dir):
+        template_dir = dir / 'templates'
+        if template_dir.is_dir():
             templates = {}
-            for item in iterator:
-                if item.name.endswith(".mustache") and item.is_file():
-                    name = item.name.split('.')[0]
-                    templates[name] = item.path
+            for child in template_dir.iterdir():
+                with child.open() as f:
+                    templates[child.stem] = f.read()
             return templates
+        else:
+            print_err(f'No scheme directory found in "{dir}"')
 
-    def __fetch_scheme(self, path):
-        with open(path, 'r') as f:
-            items = yaml.safe_load(f)
-            return items
+    def get(self, name):
+        if name in self.schemes:
+            return self.schemes[name]
+        else:
+            print_err(f'Colorscheme {name} not found')
 
-    def inject(self, name):
-        with open(CONFIG_PATH, 'r') as f:
-            config = yaml.safe_load(f)
+    def list(self):
+        for name in self.schemes:
+            if name == self.current:
+                print(f'-> {name}')
+            else:
+                print(f'   {name}')
 
-        for program_name, path in self.templates.items():
-            try:
-                with open(path, 'r') as f:
-                    if program_name in config:
-                        try:
-                            rendered_scheme = chevron.render(
-                                f, self.schemes[name])
-                            recipient = Recipient(config[program_name],
-                                                  rendered_scheme)
-                        except KeyError:
-                            print_err(f'Colorscheme "{name}" not found.')
-                        recipient.write()
-                        print(f'Updated {program_name}.')
-                    else:
-                        print(f'No configuration found for "{program_name}".')
-            except FileNotFoundError:
-                print_err(f'File "{path}" not found.')
+    def inject(self, name, verbose=False):
+        completed = []
+        failed = []
 
         if name in self.schemes:
-            self.current = name
+            scheme = self.schemes[name]
 
-            with open(PICKLE_FILE, "wb+") as f:
+            for program_name, content in self.templates.items():
+                if program_name in self.config:
+                    recipient_path = Path(self.config[program_name])
+                    data = chevron.render(content, scheme)
+
+                    r = Recipient(recipient_path, data)
+                    r.write()
+
+                    completed.append(program_name)
+                else:
+                    failed.append(program_name)
+
+            if verbose:
+                if len(completed) > 0:
+                    print(f'Updated: {", ".join(completed)}')
+
+                if len(failed) > 0:
+                    print(f'No configuration file found: {", ".join(failed)}')
+        else:
+            print_err(f'Colorscheme "{name}" not found.')
+
+        self.__save(name)
+        self.__update_env(name)
+
+    def __save(self, name):
+        if name in self.schemes:
+            self.current = name
+            print(f'-> {name}')
+
+            with self.pickle_file.open("wb+") as f:
                 pickle.dump(self.current, f)
+
+    def __update_env(self, name):
+        os.environ[f'{SCHEME_ENV}'] = name

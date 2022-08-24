@@ -1,23 +1,33 @@
 import re
 import sys
+import os
+from pathlib import Path
+from .common import print_err, XDG
 
 TOKEN = re.compile(r"^.*-- colors --.*$")
 
+
 class Recipient:
 
-    def __init__(self, path, replacement):
-        self.path = path
+    def __init__(self, path: Path, replacement):
+        self.path = self.__handle_path(path)
         self.replacement = replacement.split('\n')
-        self.content = self._get_content(self.path)
+        self.content = self.__get_content(self.path)
         self.matched_lines = self._match_lines()
 
-    def _get_content(self, path):
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                content = f.read()
-        except FileNotFoundError as e:
-            print(f'File "{self.path}" not found.')
-            sys.exit(1)
+    def __handle_path(self, path: Path):
+        if path.is_file():
+            return path
+        elif path.expanduser().is_file():
+            return path.expanduser()
+        elif XDG in os.environ:
+            return os.environ[XDG] / path.expanduser()
+        else:
+            print_err(f'File "{path}" not found.')
+
+    def __get_content(self, path):
+        with self.path.open('r') as f:
+            content = f.read()
 
         return content.split('\n')
 
@@ -28,11 +38,13 @@ class Recipient:
                 matched_lines.append(i)
 
         if len(matched_lines) != 2:
-            print(f'No correct matching pattern found in "{self.path}". Aborted.')
+            print(
+                f'No correct matching pattern found in "{self.path}"\nAborted'
+            )
             sys.exit(1)
 
         return matched_lines
-        
+
     def _replaced_lines(self):
         content_before = self.content[:self.matched_lines[0] + 1]
         content_after = self.content[self.matched_lines[1]:]
@@ -42,5 +54,5 @@ class Recipient:
     def write(self):
         content = "\n".join(self._replaced_lines())
 
-        with open(self.path, "w", encoding="utf-8") as f:
+        with self.path.open("w", encoding="utf-8") as f:
             f.write(content)
