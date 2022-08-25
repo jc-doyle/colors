@@ -13,7 +13,7 @@ class Recipient:
         self.path = self.__handle_path(path)
         self.replacement = replacement.split('\n')
         self.content = self.__get_content(self.path)
-        self.matched_lines = self._match_lines()
+        self.matched_lines = self.__match_lines()
 
     def __handle_path(self, path: Path):
         if path.is_file():
@@ -31,7 +31,7 @@ class Recipient:
 
         return content.split('\n')
 
-    def _match_lines(self):
+    def __match_lines(self):
         matched_lines = []
         for i, line in enumerate(self.content):
             if TOKEN.match(line):
@@ -45,14 +45,14 @@ class Recipient:
 
         return matched_lines
 
-    def _replaced_lines(self):
+    def __replaced_lines(self):
         content_before = self.content[:self.matched_lines[0] + 1]
         content_after = self.content[self.matched_lines[1]:]
 
         return content_before + self.replacement + content_after
 
     def write(self):
-        content = "\n".join(self._replaced_lines())
+        content = "\n".join(self.__replaced_lines())
 
         with self.path.open("w", encoding="utf-8") as f:
             f.write(content)

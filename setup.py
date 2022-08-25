@@ -8,5 +8,5 @@ setup(
     author="Jonathan Doyle",
     install_requires=["chevron", "pyyaml", "rich"],
     python_requires=">=3.5",
-    entry_points={"console_scripts": ["colors = colors.cli:run"]},
+    entry_points={"console_scripts": ["colors = colors.main:run"]},
 )

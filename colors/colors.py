@@ -1,6 +1,5 @@
 import chevron
 import pickle
-import os
 from pathlib import Path
 from .recipient import Recipient
 
@@ -8,20 +7,20 @@ from .common import print_err, parse_yaml, Config
 
 SCHEME_ENV = 'COLORSCHEME'
 
+
 class Colors:
 
     def __init__(self, dir):
         self.pickle_file = dir / '.current'
-        self.config = self.__get_config(dir)
+        self.cfg = self.__get_config(dir)
         self.schemes = self.__fetch_schemes(dir)
         self.templates = self.__fetch_templates(dir)
         self.current = self.__get_current()
 
     def __get_config(self, dir: Path):
         config_path = dir / 'config.yaml'
-        # Config(config_path)
         if config_path.is_file():
-            return parse_yaml(config_path)
+            return Config(config_path)
         else:
             print_err(f'"config.yaml" not found in "{dir}"\nAborted')
 
@@ -78,8 +77,8 @@ class Colors:
             scheme = self.schemes[name]
 
             for program_name, content in self.templates.items():
-                if program_name in self.config:
-                    recipient_path = Path(self.config[program_name])
+                if program_name in self.cfg.PATHS:
+                    recipient_path = Path(self.cfg.PATHS[program_name])
                     data = chevron.render(content, scheme)
 
                     r = Recipient(recipient_path, data)
@@ -99,15 +98,11 @@ class Colors:
             print_err(f'Colorscheme "{name}" not found.')
 
         self.__save(name)
-        self.__update_env(name)
 
     def __save(self, name):
         if name in self.schemes:
             self.current = name
-            print(f'-> {name}')
+            print(f'-> {self.current}')
 
             with self.pickle_file.open("wb+") as f:
                 pickle.dump(self.current, f)
-
-    def __update_env(self, name):
-        os.environ[f'{SCHEME_ENV}'] = name

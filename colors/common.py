@@ -25,4 +25,12 @@ class Config:
 
     def __init__(self, path):
         raw_yaml = parse_yaml(path)
-        print(raw_yaml)
+        self.__parse(raw_yaml)
+
+    def __parse(self, data):
+        if 'general' in data:
+            self.GENERAL = data.pop('general')
+        else:
+            self.GENERAL = None
+
+        self.PATHS = data

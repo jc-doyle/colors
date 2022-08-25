@@ -1,5 +1,7 @@
 import os
 import argparse
+import subprocess
+
 from pathlib import Path
 from .common import print_err, COLOR_ENV, XDG
 from .colors import Colors
@@ -63,6 +65,7 @@ def picker(c: Colors, args):
 def default(c: Colors, args):
     if args.name:
         injector(c, args)
+        run_hooks(args)
     else:
         injector(c, args)
         picker(c, args)
@@ -71,6 +74,22 @@ def default(c: Colors, args):
 def current(c: Colors, args):
     if c.current is not None:
         print(c.current)
+
+
+def run_hooks(args):
+    p = Path(BASE_DIR) / 'hooks'
+
+    if p.is_dir():
+        print('ya')
+        for script in p.iterdir():
+            __run_hook(args, script)
+
+
+def __run_hook(args, script):
+    if os.access(script, os.X_OK):
+        process = subprocess.run([script, args.name])
+        if process.returncode != 0:
+            print_err(f'{script} returned {process.returncode}')
 
 
 @catch_keyboard_interrupt
@@ -84,6 +103,7 @@ def run():
         current(c, args)
     elif args.set:
         injector(c, args)
+        run_hooks(args)
     elif args.print:
         picker(c, args)
     else:
