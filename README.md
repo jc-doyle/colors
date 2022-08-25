@@ -1,1 +1,1 @@
-A global colorscheme, using base-16.
+A colorscheme generator, using base-16.
