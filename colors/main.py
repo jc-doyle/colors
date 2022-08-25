@@ -65,7 +65,7 @@ def picker(c: Colors, args):
 def default(c: Colors, args):
     if args.name:
         injector(c, args)
-        run_hooks(args)
+        run_hooks(c)
     else:
         injector(c, args)
         picker(c, args)
@@ -76,20 +76,19 @@ def current(c: Colors, args):
         print(c.current)
 
 
-def run_hooks(args):
+def run_hooks(c: Colors):
     p = Path(BASE_DIR) / 'hooks'
 
     if p.is_dir():
-        print('ya')
         for script in p.iterdir():
-            __run_hook(args, script)
+            __run_hook(script, c)
 
 
-def __run_hook(args, script):
+def __run_hook(script, c: Colors):
     if os.access(script, os.X_OK):
-        process = subprocess.run([script, args.name])
+        process = subprocess.run([script, c.current])
         if process.returncode != 0:
-            print_err(f'{script} returned {process.returncode}')
+            print_err(f'"{script.name}" returned {process.returncode}')
 
 
 @catch_keyboard_interrupt
@@ -103,7 +102,7 @@ def run():
         current(c, args)
     elif args.set:
         injector(c, args)
-        run_hooks(args)
+        run_hooks(c)
     elif args.print:
         picker(c, args)
     else:

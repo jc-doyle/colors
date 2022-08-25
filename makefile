@@ -23,6 +23,10 @@ install: dependencies
 	@echo "Installing packages.."
 	. venv/bin/activate; $(PYTHON) -m pip install --editable .
 
+package:
+	@echo "Packaging.."
+	$(PYTHON) -m pip install .
+
 clean:
-	rm -rf venv
+	rm -rf venv build colors.egg-info
 	find -iname "*.pyc" -delete
