@@ -1,6 +1,7 @@
 import os
 import argparse
 import subprocess
+from threading import Thread
 
 from pathlib import Path
 from .common import print_err, COLOR_ENV, XDG
@@ -81,7 +82,8 @@ def run_hooks(c: Colors):
 
     if p.is_dir():
         for script in p.iterdir():
-            __run_hook(script, c)
+            thread = Thread(target=__run_hook(script, c))
+            thread.run()
 
 
 def __run_hook(script, c: Colors):
