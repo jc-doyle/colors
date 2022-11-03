@@ -28,5 +28,5 @@ package:
 	$(PYTHON) -m pip install .
 
 clean:
-	rm -rf venv build colors.egg-info dist
+	rm -rf venv build colors.egg-info
 	find -iname "*.pyc" -delete
